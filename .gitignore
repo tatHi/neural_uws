@@ -1,0 +1,4 @@
+model/
+data/
+src/__pycache__/
+*.py[cod]

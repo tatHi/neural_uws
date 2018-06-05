@@ -1,0 +1,79 @@
+# opt setと対応するvecを計算
+import sys
+ep = int(sys.argv[1])
+
+import segmentater
+import dataset
+import module
+import numpy as np
+from tqdm import tqdm
+import pickle
+
+batchSize = 64
+sg = None
+
+ty = 'rongo'
+
+def setup():
+    global sg
+    sg = segmentater.Segmentater()
+    sg.load(ep)
+
+def train():
+    # train
+    indices = np.arange(len(sg.ds.idData))
+    batches = module.pack(indices, batchSize)
+    results_train = []
+    for batch in tqdm(batches):
+        results_train += sg.getOptSegmentation(batch) 
+
+    # write
+    f = open('../data/%s_train_text_uws%d.txt'%(ty,ep),'w')
+    for line in results_train:
+        f.write(line+'\n')
+    f.close()
+
+def test():
+    # test
+    data = [line.strip() for line in open('../../data/iphone_test_text.txt') if line.strip()]
+    sg.ds.setIdData(data)
+
+    indices = np.arange(len(sg.ds.idData))
+    batches = module.pack(indices, batchSize)
+    results_test = []
+    for batch in tqdm(batches):
+        results_test += sg.getOptSegmentation(batch) 
+
+    # write
+    f = open('../data/iphone_test_text_uws%d.txt'%ep,'w')
+    for line in results_test:
+        f.write(line+'\n')
+    f.close()
+
+def makeVecs():
+    # set word vec
+    ws = set()
+    results_train = [line.strip() for line in open('../data/iphone_train_text_uws%d.txt'%ep)]
+    results_test = [line.strip() for line in open('../data/iphone_test_text_uws%d.txt'%ep)]
+    for line in results_train+results_test:
+        line = line.split('　')
+        ws |= set(line)
+    ws = [tuple(sg.ds.chars2ids(w)) for w in list(ws)]
+    ws += [(sg.ds.char2id[w],) for w in ['<BOS>','<EOS>']]
+
+    # set
+    sg.lm.getWordVecs(ws)
+
+    wvDict = {}
+    for w in ws:
+        i = sg.lm.wordVecIndiceDict[w]
+        wvDict[w] = sg.lm.wordVecTable[i:i+1,].data
+
+    pickle.dump(wvDict, open('../data/wordVec_uws%d.dict'%ep,'wb'))
+
+setup()
+train()
+#setup()
+#test()
+#setup()
+#makeVecs()
