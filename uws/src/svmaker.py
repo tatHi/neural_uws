@@ -12,7 +12,7 @@ import pickle
 batchSize = 64
 sg = None
 
-ty = 'rongo'
+ty = 'ntcir'
 
 def setup():
     global sg
@@ -35,7 +35,7 @@ def train():
 
 def test():
     # test
-    data = [line.strip() for line in open('../../data/iphone_test_text.txt') if line.strip()]
+    data = [line.strip() for line in open('../../data/%s_test_text.txt'%ty) if line.strip()]
     sg.ds.setIdData(data)
 
     indices = np.arange(len(sg.ds.idData))
@@ -45,7 +45,7 @@ def test():
         results_test += sg.getOptSegmentation(batch) 
 
     # write
-    f = open('../data/iphone_test_text_uws%d.txt'%ep,'w')
+    f = open('../data/%s_test_text_uws%d.txt'%(ty, ep),'w')
     for line in results_test:
         f.write(line+'\n')
     f.close()
@@ -53,8 +53,8 @@ def test():
 def makeVecs():
     # set word vec
     ws = set()
-    results_train = [line.strip() for line in open('../data/iphone_train_text_uws%d.txt'%ep)]
-    results_test = [line.strip() for line in open('../data/iphone_test_text_uws%d.txt'%ep)]
+    results_train = [line.strip() for line in open('../data/%s_train_text_uws%d.txt'%(ty,ep))]
+    results_test = [line.strip() for line in open('../data/%s_test_text_uws%d.txt'%(ty,ep))]
     for line in results_train+results_test:
         line = line.split('　')
         ws |= set(line)
@@ -69,11 +69,11 @@ def makeVecs():
         i = sg.lm.wordVecIndiceDict[w]
         wvDict[w] = sg.lm.wordVecTable[i:i+1,].data
 
-    pickle.dump(wvDict, open('../data/wordVec_uws%d.dict'%ep,'wb'))
+    pickle.dump(wvDict, open('../data/%s_wordVec_uws%d.dict'%(ty,ep),'wb'))
 
+#setup()
+#train()
 setup()
-train()
-#setup()
-#test()
-#setup()
-#makeVecs()
+test()
+setup()
+makeVecs()

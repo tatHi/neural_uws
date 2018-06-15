@@ -24,10 +24,14 @@ gpu = False
 name = ''
 k = 100#300
 
-root = '../model/train_2/'
+target = 'ntcir'
+
+#root = '../model/train_3/' これはthre=1
+root = '../model/ntcir/'
+# lmのthreを確認すること
 
 lang = 'ja'
-textPath = '../../data/iphone_train_text.txt'
+textPath = '../../data/%s_train_text.txt'%target
 idDictPath = '%sids.dict'%root
 charVecTablePath = '%scharEmbed.npy'%root
 uniProbDictPath = '%suniProb.dict'%root
@@ -171,7 +175,7 @@ class Segmentater:
             self.lm.to_gpu()
             self.lm.parameter_to('gpu')
         
-        loss = self.lm.getLoss_softmax(segedLines, self.ds.getInVoc())
+        loss = self.lm.getLoss(segedLines, self.ds.getInVoc())
 
         print('getLoss:',time()-st)
 

@@ -57,9 +57,9 @@ from chainer import optimizers
 
 class Trainer:
     def __init__(self):
-        data = [line.strip() for line in open('../../data/rongo.txt') if line.strip()]
+        data = [line.strip() for line in open('../../data/ntcir_train_text.txt') if line.strip()]
         self.ds = dataset.Dataset(data, init=True)
-        pickle.dump((self.ds.char2id, self.ds.id2char), open('../model/rongo/ids.dict','wb'))
+        pickle.dump((self.ds.char2id, self.ds.id2char), open('../model/ntcir/ids.dict','wb'))
 
         self.clm = CLM(len(self.ds.char2id))
         self.opt = optimizers.Adam()
@@ -83,7 +83,7 @@ class Trainer:
             
             print(accLoss/len(batches))
 
-            np.save('../model/rongo/charEmbed.npy', self.clm.embed.W.data)
+            np.save('../model/ntcir/charEmbed.npy', self.clm.embed.W.data)
 
 if __name__ == '__main__':
     trainer = Trainer()

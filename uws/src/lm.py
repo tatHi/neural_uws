@@ -1,4 +1,3 @@
-## mostly copied from model:mizuki.wordlm.py
 import numpy as np
 import chainer 
 from chainer import Chain
@@ -17,7 +16,8 @@ cSize = 3
 embedSize = 30
 wordSize = 100
 
-wordVecMode = 'cai'
+thre = 0 # context内でいくつknowなら計算するか
+# w[thre:-1]をみるので，直前1単語がIVならOK，とするならthre=1
 
 def prepareCNN(xs):
     # args: xs=[1,2,3,4,5]
@@ -42,7 +42,6 @@ class LM(Chain):
         )
 
         # 計算したことがあるパターンは無駄に計算しない
-        #self.wordVecDict = {}
         self.ngramProbDict = {}
 
         self.wordVecTable = None
@@ -60,14 +59,14 @@ class LM(Chain):
         notInDict = [word for word in list(set(words)) if word not in self.wordVecIndiceDict]
 
         if notInDict:
-            self.setWordVecs_cai(notInDict)
+            self.setWordVecs(notInDict)
 
         # dictからベクトルを抜き出してwvsをつくる
         ids = [self.wordVecIndiceDict[word] for word in words]
         wvs = self.wordVecTable[ids,]
         return wvs
 
-    def setWordVecs_cai(self, notInDict):
+    def setWordVecs(self, notInDict):
         #st = time()
 
         ems = [F.reshape(self.clm.getCharVecs(word),(embedSize*len(word),)) for word in notInDict]
@@ -90,8 +89,6 @@ class LM(Chain):
         #print('make word vec:', time()-st)
 
     def setNgramProbs(self, inVoc, V, pairs, ds):
-        #alpha = 1
-        #lam = alpha/(V+alpha)
         lam = ds.getLambda()
 
         # 計算されていないペアについて確率を求める
@@ -112,11 +109,8 @@ class LM(Chain):
             notIn_n = [] # neural-trigramで計算するペア
             for pair in notIn:
                 # targetがknown wordなら計算する
-                #w = ''.join(ds.ids2chars(pair[-1]))
-                #know = ds.cObs.get(w)>0
-
                 know = True
-                for w in pair:
+                for w in pair[thre:]:
                     if ds.cObs.get(''.join(ds.ids2chars(w)))==0:
                         know=False
                         break
@@ -149,54 +143,33 @@ class LM(Chain):
         with chainer.no_backprop_mode():
             ems = self.getWordVecs(voc).data
         
-        #st = time()
         vocIndDict = {w:_ for _,w in enumerate(voc)}
         notInIndices = [[vocIndDict[w] for w in pair] for pair in notIn]
-        #print('make indice list:', time()-st)
 
-        st = time()
         prevs = np.concatenate(
                     [ems[[nii[:-1]],].reshape(1,wordSize*(n-1))
                     for nii in notInIndices], axis=0
                 )
-        print('make prev vecs:',time()-st)
 
-        st = time()
         preds = np.dot(prevs, self.predLinear.W.T.data)+self.predLinear.b.data
-        print('linear:', time()-st)
 
-        st = time()
         preds = np.tanh(preds)
-        print('tanh:', time()-st)
 
-
-        st = time()
         dotTable = np.dot(preds, ems.T)
-        print('dot:', time()-st)
 
         # 各行の最大値を引いておく
-        st = time()
         maxes = np.max(dotTable, axis=1)
-        print('get max:', time()-st)
         
-        st = time()
         expTable = dotTable - np.expand_dims(maxes, axis=1)
-        print('dot-maxes(expanded_dims):',time()-st)
 
         # inVocの列だけ抜き出す
-        st = time()
         expTable_inVoc = expTable[:,[vocIndDict[w] for w in inVoc]] 
-        print('extraction:', time()-st)
 
         # inVocに対してexp
-        st = time()
         expTable_inVoc = np.exp(expTable_inVoc)
-        print('exp:', time()-st)
 
         # axis=1でsumとって正規化近似
-        st = time()
         Zs = (V/len(inVoc))*np.sum(expTable_inVoc, axis=1)
-        print('sum:', time()-st)
 
         # targetのexp
         ys = expTable[list(range(expTable.shape[0])),[vocIndDict[ni[-1]] for ni in notIn]]
@@ -214,9 +187,6 @@ class LM(Chain):
                     lam*self.clm.getWordProb(target)
             self.ngramProbDict[ni] = p
 
-        print('set dict:', time()-st)
-
-#
     # 単一フレーズに対して確率を与える
     def getSentenceProb(self, segIdLine, inVoc, V, ds, prod=True):
         # arg: segIdLine = [(0,), (1,2), (3,4,5), (0,)]
@@ -234,33 +204,16 @@ class LM(Chain):
             p_ngram = self.ngramProbDict[pair]
             ps.append(p_ngram)
 
-        '''
-        # stack list of variable into variable
-        print(ps)
-        ps = F.stack(ps)
-        '''
-
         if prod:
             return np.prod(ps)
         else:
             return ps
 
-    def getSentenceLoss(self, segIdLine, inVoc, V):
-        pairs = ngramPair(segIdLine,n)
-
-        # 未計算のngram確率をセット
-        self.setNgramProbs(inVoc,V,pairs,ds=None,forLoss=True)
-       
-        loss = 0
-        for pair in pairs:
-            s,z = self.ngramProbDict[pair]
-            loss += (-s) + F.log(z)
-        return loss/len(pairs)
-
-    def getLoss_softmax(self, segIdLines, inVoc):
+    def getLoss(self, segIdLines, inVoc):
         # inVocは全語彙、真面目にsoftmaxとる
         
         # サンプリングで使ったベクトルを捨てる
+        # (no_backprop_modeで生成したものなので)
         self.wordVecIndiceDict = {}
         self.wordVecTable = None
 
@@ -295,26 +248,6 @@ class LM(Chain):
         self.ngramProbDict = {}
 
         return loss
-
-    def parameter_to(self, mode):
-        if mode not in ['cpu', 'gpu']:
-            print('lm.parameter_to:argument error', mode)
-            exit()
-
-        # charlm table
-        if mode=='gpu':
-            self.gpu = True
-            self.clm.charVecTable = cuda.to_gpu(self.clm.charVecTable)
-        else:
-            self.gpu = False
-            self.clm.charVecTable = cuda.to_cpu(self.clm.charVecTable)
-
-        self.clm.embedTable = None
-        self.clm.dot_table = None
-
-        # lm wordVecDict
-        self.wordVecTable = None
-        self.wordVecIndiceDict = {}
 
 if __name__ == '__main__':
     lm = LM(10)

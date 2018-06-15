@@ -1,4 +1,5 @@
-model/
-data/
-src/__pycache__/
-*.py[cod]
+*/model/*
+*/data/*
+*/src/__pycache__/*
+*/src/*
+!*/src/*.py

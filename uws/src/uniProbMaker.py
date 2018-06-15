@@ -9,7 +9,7 @@ def poisson(k,lam=1):
     return (lam**(k)*np.exp(-lam))/math.factorial(k)
 
 maxL = 8
-data = [line.strip() for line in open('../../data/rongo.txt','r')]
+data = [line.strip() for line in open('../../data/ntcir_train_text.txt','r')]
 
 # limit
 data = data[:]
@@ -34,4 +34,4 @@ uniProbDict = {c:uniDict[c]/uniAll for line in data for c in line}
 uniProbDict['<BOS>'] = uniDict['<BOS>']/uniAll
 uniProbDict['<EOS>'] = uniDict['<EOS>']/uniAll
 
-pickle.dump(uniProbDict, open('../model/rongo/uniProb.dict', 'wb'))
+pickle.dump(uniProbDict, open('../model/ntcir/uniProb.dict', 'wb'))
