@@ -12,9 +12,6 @@ def poisson(k, lam=1):
 
 class Dataset:
     def __init__(self, data, idDictPath=None, init=False):
-        # limit
-        # data = data[:100]
-
         # param
         self.data = []
         self.id2char = {}
@@ -67,14 +64,6 @@ class Dataset:
         self.data = self.data[:size]
         self.idData = self.idData[:size]
 
-    def setInitialSeg(self, setCObs=True):
-        # uni
-        self.segData = [[1 for _ in range(len(line)-1)] for line in self.data]
-        
-        if setCObs:
-            for line in self.data:
-                self.cObs.add_sentence([bos]+list(line)+[eos])
-
     def setInitialSeg_random(self, setCObs=True):
         # uni
         self.segData = []
@@ -99,46 +88,6 @@ class Dataset:
             for i in range(len(self.data)):
                 # 初回のみEOSを追加
                 self.cObs.add_sentence([bos]+self.getSegedLine(i)+[eos])
-
-    def setInitialSeg_mecab(self, setCObs=True):
-        segLines = [line.strip().split(' ') for line
-                    in open('../../data/iphone_text_mecab.txt','r') if line.strip()]
-
-        # for limitation
-        if self.limitSize!=None:
-            segLines = segLines[:self.limitSize]
-
-        if len(self.data)!=len(segLines):
-            print('mismatch data and seglines')
-            print(len(self.data), len(segLines))
-            exit()
-       
-        # mecab 
-        self.data = []
-        self.idData = []
-        self.segData = []
-
-        data = []
-
-        for segLine in segLines:
-            line = ''.join(segLine)
-            data.append(line)
-
-            tmp = []
-            for w in segLine:
-                tmp += [0 for _ in range(len(w)-1)]
-                tmp += [1]
-            self.segData.append(tmp[:-1])
-
-        self.setIdData(data)
-
-        if setCObs:
-            for i in range(len(self.data)):
-                self.addSeg(i)
-
-        # 初回のみBOSEOSを追加
-        self.cObs.add_sentence([bos for _ in range(len(self.data))])
-        self.cObs.add_sentence([eos for _ in range(len(self.data))])
 
     def chars2ids(self, chars):
         # chars must be list of char
@@ -234,48 +183,6 @@ class Dataset:
     def getBaseProbs(self, words):  
         return [self.uniProbDict[word] for word in words]
 
-    def negativeSampling(self, target, size):
-        # return tuple id word
-        ws = [k for k in self.cObs.uni if k!=target and self.cObs.uni[k]>0]
-        dist = np.array([self.cObs.uni[w]**(3/4) for w in ws])
-        dist /= np.sum(dist)
-        ls = np.random.choice(len(dist), size, p=dist, replace=False)
-        
-        ns = []
-        for l in ls:
-            ns.append(ws[l])
-        return ns
-
-    def negativeSampling_outVoc(self, size):
-        # uni countが0の単語をサンプリングする
-        # (一度でもサンプリングされて、カウントが0のもの)
-        ws = [k for k in self.cObs.uni if self.cObs.uni[k]==0]
-        if len(ws) < size:
-            return []
-
-        # 一様分布からサンプリング
-        ls = np.random.choice(len(ws), size, replace=False)
-        
-        ns = []
-        for l in ls:
-            ns.append(ws[l])
-        return ns
-
-    def setDist(self):
-        # cObs.uniの分布を作る
-        # c(w)**(3/4)のノイズ分布(negative sampling準拠)
-
-        self.dist_p = []
-        self.dist_label = []
-
-        for w in self.cObs.uni:
-            if self.cObs.uni[w]>0:
-                self.dist_p.append(self.cObs.uni[w]**(3/4))
-                self.dist_label.append(w)
-        
-        # normalize
-        self.dist_p = (self.dist_p/np.sum(self.dist_p)).tolist()
-
     def getInVoc(self, size=None, mode='uniform'):
         if size==None:
             vocs = [tuple(self.chars2ids(w)) for w in self.cObs.uni if self.cObs.get(w)>0]
@@ -305,21 +212,6 @@ class Dataset:
         gam = 1
         cW = self.getCW()
         return (self.cObs.get(seg)+gam*self.baseProbDict[seg])/(cW+gam)
-
-    def getPhraseProb(self, segedLine, prod=True):
-        # segedLine: ['先生', 'は', '次','に']
-        gam = 1
-        cW = self.getCW()
-
-        ps = []
-        for seg in segedLine:
-            # ディリクレ分布
-            ps.append((self.cObs.get(seg)+gam*self.baseProbDict[seg])/(cW+gam))
-
-        if prod:
-            return np.prod(ps)
-        else:
-            return ps
 
     def getLambda(self):
         unk = 0
@@ -372,10 +264,3 @@ class Counter:
         for w in segLine:
             self.reduce(w)
 
-if __name__ == '__main__':
-    
-    data = [line.strip() for line in open('../../data/kokoro_formatted.txt','r')]
-    ds = Dataset(data)
-    ds.setInitialSeg()
-    print(ds.cObs.get(bos))
-    print(ds.cObs.get(eos))

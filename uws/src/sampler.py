@@ -170,15 +170,3 @@ def track(idLine, lm, ds):
     segLine = segLine[:-1]
     return segLine
 
-if __name__ == '__main__':
-    import dataset
-    import linecache
-    lm = DammyLM()
-    ds = dataset.Dataset([line.strip() for line in open('../../data/iphone_train_text.txt')])
-
-    idLine = ds.idData[4706][1:-1]
-    print(ds.ids2chars(idLine))
-
-    setNgram([idLine], lm, ds, None)
-    print(viterbi(idLine, lm, ds))
-
