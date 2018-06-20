@@ -6,10 +6,6 @@ from tqdm import tqdm
 bos = '<BOS>'
 eos = '<EOS>'
 
-def poisson(k, lam=1):
-    p = (lam**(k)*np.exp(-lam))/math.factorial(k)
-    return p
-
 class Dataset:
     def __init__(self, data, idDictPath=None, init=False):
         # param
@@ -180,9 +176,6 @@ class Dataset:
         ps = [(self.cObs.get(word))/(cW) for word in words]
         return ps
 
-    def getBaseProbs(self, words):  
-        return [self.uniProbDict[word] for word in words]
-
     def getInVoc(self, size=None, mode='uniform'):
         if size==None:
             vocs = [tuple(self.chars2ids(w)) for w in self.cObs.uni if self.cObs.get(w)>0]
@@ -207,11 +200,6 @@ class Dataset:
         if pos in cand:
             cand = self.negativeSampling(pos, size)
         return cand
-
-    def getWordProb(self, seg):
-        gam = 1
-        cW = self.getCW()
-        return (self.cObs.get(seg)+gam*self.baseProbDict[seg])/(cW+gam)
 
     def getLambda(self):
         unk = 0

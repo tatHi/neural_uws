@@ -18,9 +18,6 @@ maxL = 8
 batchSize = 8*4
 preEp = -1
 
-debug = False
-gpu = False
-
 name = ''
 k = 100#300
 
@@ -169,11 +166,6 @@ class Segmentater:
         segedLines = [[segedLine[0] for _ in range(n-1)]+segedLine for segedLine in segedLines]
 
         st = time()
-
-        #学習時だけgpu
-        if gpu:
-            self.lm.to_gpu()
-            self.lm.parameter_to('gpu')
         
         loss = self.lm.getLoss(segedLines, self.ds.getInVoc())
 
@@ -186,8 +178,6 @@ class Segmentater:
 
         st = time()
         self.opt.update()
-        if gpu:
-            self.lm.to_cpu()
         print('update:',time()-st)
 
     def save(self, ep):
