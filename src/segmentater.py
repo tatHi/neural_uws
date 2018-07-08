@@ -39,7 +39,6 @@ class Segmentater:
         
         self.lm.bowIndice = len(self.ds.char2id)
         self.lm.eowIndice = self.lm.bowIndice+1
-        
 
     def batchProcess(self, batch, showSeg):
         self.lm.cleargrads()
@@ -86,10 +85,10 @@ class Segmentater:
         pickle.dump(self.ds, open(self.datasetPath,'wb'))
 
     def load(self):
+        self.ds = pickle.load(open(self.datasetPath,'rb'))
         self.lm = L.LM(len(self.ds.char2id)+2, self.ds.id2char,
                                 self.charVecPath, self.uniProbDictPath)
         serializers.load_npz(self.modelPath, self.lm)
-        self.ds = pickle.load(open(self.datasetPath,'rb'))
 
     def train(self, beginEpoch, endEpoch, batchSize, showSeg):
         if beginEpoch==0:
@@ -109,13 +108,17 @@ class Segmentater:
                 print('epoch:%d\tbatch:%d/%d\ttime:%f'%(ep, i+1, len(batches), time()-startTime))
             self.save()
 
-    def segmentate(self, batchSize):
+    def segmentate(self, textPath, batchSize):
         sg.load()
-        batches = module.pack(np.arange(self.ds.idData), batchSize)
+
+        # set text data
+        self.ds.setIdData(textPath)
+
+        batches = module.pack(np.arange(len(self.ds.idData)), batchSize)
 
         for batch in batches:
             inVoc = self.ds.getInVoc()
-            idLines = [self.ds.idData[b] for b in batch]
+            idLines = [self.ds.idData[b][1:-1] for b in batch]
             sampler.setNgram(idLines, self.lm, self.ds, inVoc)
 
             for b in batch:
@@ -157,5 +160,5 @@ if __name__ == '__main__':
     if args.mode == 'train':
         sg.train(args.beginEpoch, args.endEpoch, args.batchSize, args.showSeg)
     elif args.mode == 'seg':
-        for line in sg.segmentate():
+        for line in sg.segmentate(args.textPath, args.batchSize):
             print(line)

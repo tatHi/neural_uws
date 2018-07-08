@@ -1,13 +1,16 @@
-# opt setと対応するvecを計算
 import sys
-ep = int(sys.argv[1])
-
 import segmentater
 import dataset
 import module
 import numpy as np
-from tqdm import tqdm
 import pickle
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-mp','--modelPath',type=str,help='path where model path located')
+parser.add_argument('-stp','--segedTextPath',type=str,help='path of segmentated text')
+parser.add_argument('-bs','--batchSize',type=int,default=64,
+                    help='batch size for vector calc.')
 
 batchSize = 64
 sg = None

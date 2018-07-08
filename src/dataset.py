@@ -43,7 +43,8 @@ class Dataset:
             self.char2id[token] = len(self.char2id)
             self.id2char[self.char2id[token]] = token
 
-    def setIdData(self, data):
+    def setIdData(self, textPath):
+        data = [line.strip() for line in open(textPath) if line.strip()]
         self.data = []
         self.idData = []
         self.segData = []
