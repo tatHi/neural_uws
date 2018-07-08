@@ -7,7 +7,6 @@ import lm as L
 import dataset
 import module
 import pickle
-#import sampler_uni as sampler
 import sampler
 from tqdm import tqdm
 from time import time
@@ -19,15 +18,12 @@ batchSize = 8*4
 preEp = -1
 
 name = ''
-k = 100#300
+k = 100
 
 target = 'ntcir'
 
-#root = '../model/train_3/' これはthre=1
 root = '../model/ntcir/'
-# lmのthreを確認すること
 
-lang = 'ja'
 textPath = '../../data/%s_train_text.txt'%target
 idDictPath = '%sids.dict'%root
 charVecTablePath = '%scharEmbed.npy'%root
@@ -72,8 +68,6 @@ def getPhrasePair(idLine, segLine, targetIndice):
         ls.append(bos)
 
     ls = ls[::-1]
-    #print(ls)
-   
 
     ### right words ###
     rs = []
@@ -91,7 +85,6 @@ def getPhrasePair(idLine, segLine, targetIndice):
     # ifをwhileにするとbosと同じ数だけパディング（確率が壊れるのでやらない）
     if len(rs) < n:
         rs.append(eos)
-    #print(rs)
 
     seg0 = ls + [w0] + rs
     seg1 = ls + [w1L, w1R] + rs
@@ -103,7 +96,6 @@ class Segmentater:
         data = [line.strip() for line 
                     in open(textPath,'r') if line.strip()]
         self.ds = dataset.Dataset(data, idDictPath)
-        #self.ds.limitData(8*100)
 
         self.ds.setInitialSeg_random()
 
@@ -112,7 +104,6 @@ class Segmentater:
         self.lm.bowIndice = len(self.ds.char2id)
         self.lm.eowIndice = self.lm.bowIndice+1
 
-        #self.opt = optimizers.SGD()
         self.opt = optimizers.Adam()
         self.opt.setup(self.lm)
 
@@ -202,28 +193,6 @@ class Segmentater:
                 self.batchProcess(batch, ep<preEp)
             self.save(ep)
 
-    def calcPPL(self):
-        # 全文について現在の分割でPPLを計算する
-        # B B a b c (trigramのとき。EOSは入れなくていい)
-        # -log2(p(a|B,B)p(b|B,a)p(c|a,b))/len(abc)
-        entropy = 0
-        W = 0
-
-        allVoc = self.ds.getInVoc()
-        V = len(allVoc)
-        for i in range(len(self.ds.idData)):
-            segedIdLine = module.segmentIdLine(self.ds.idData[i], [1]+self.ds.segData[i]+[1])
-            segedIdLine = [segedIdLine[0] for _ in range(n-1)] + segedIdLine[:-1] 
-            ps = self.lm.getSentenceProb(segedIdLine, allVoc, V, self.ds, prod=False)
-
-            entropy += -np.sum(np.log2(ps))/(len(segedIdLine)-2)
-            W += len(segedIdLine)-2
-        entropy = entropy/len(self.ds.idData)
-        PPL = 2**entropy
-        U = len(allVoc)
-        N = len([w for w in self.ds.cObs.uni if self.ds.cObs.uni[w]==1])
-        print('%d\t%d\t%d\t%f'%(U,N,W,PPL))
-
     def getOptSegmentation(self, batch):
         inVoc = self.ds.getInVoc()
         idLines = [self.ds.idData[b] for b in batch]
@@ -238,20 +207,6 @@ class Segmentater:
             results.append('　'.join(self.ds.getSegedLine(b)))
     
         return results
-
-def checkPPL(begin=0, end=100, stride=10):
-    sg = Segmentater()
-    print('ep\tvocSize\tfreq1\twordN\tPPL')
-    for ep in range(begin,end+1,stride):
-        print(ep,end='\t')
-        sg.load(ep)
-
-        sg.lm.wordVecDict = {}
-        sg.lm.cgramVecDict = {}
-        sg.lm.ngramProbDict = {}
-
-        #sg.setOptSegmentation()
-        sg.calcPPL()
 
 def showTempSegLine(begin=0, end=10, size=10):
     sg = Segmentater()
@@ -273,22 +228,6 @@ def showOptSegLine(begin=0, end=30, size=20):
             print(r)
 
 if __name__ == '__main__':
-    #'''
-    #checkPPL(0, 50, 1)
-    
-    #showTempSegLine(0,10, size=20)
-    #showOptSegLine(0,10,size=20)
-
     sg = Segmentater()
     sg.train(0, 100)
 
-    
-
-    '''    
-    idLine = [0,1,2,3,4,5,6,7,8,9,0]
-    segLine = [1,1,1,1,0,1,0,1,1,1]
-    pair = getPhrasePair(idLine, segLine, 8)
-    print(idLine)
-    print(' ',segLine)
-    print(pair)
-    '''
