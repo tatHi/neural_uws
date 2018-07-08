@@ -6,11 +6,12 @@ Unsupervised Word Segmentation with Neural Language Model
 発表資料:gitに後ほどcommit  
 
 特許をとっているNPYLMを元にした研究です．  
-念のため研究目的以外での利用は控えてください．
+念のため研究目的以外での利用は控えてください．  
 https://twitter.com/daiti_m/status/851810748263157760  
 
 ## 環境
-Chainer 4.0
+python 3.6.4
+Chainer 4.0  
 numpy
   
 
