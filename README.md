@@ -10,5 +10,14 @@ Unsupervised Word Segmentation with Neural Language Model
 念のため研究目的以外での利用は控えてください．
 
 ```
+$ mkdir result
+$ cd src
+```
+
+```
 $ python charVecTrainer.py --textPath ../data/kokoro.txt --resultPath ../result --embedSize 30 --windowSize 3 --epoch 100 --batchSize 64
+```
+
+```
+$ python uniProbMaker.py --textPath ../data/kokoro.txt  --resultPath ../result --maxLength 8
 ```
