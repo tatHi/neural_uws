@@ -59,3 +59,12 @@ python segmentater.py --mode seg \
                       --batchSize 8 \
                       > ../result/segedData.txt
 ```
+
+  
+単語分割に対して分散表現を計算して辞書化
+```
+python segmentater.py --mode vecAssign \
+                      --pretrainPath ../result \
+                      --resultPath ../result \
+                      --segedTextPath ../result/segedData.txt
+```

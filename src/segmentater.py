@@ -109,7 +109,7 @@ class Segmentater:
             self.save()
 
     def segmentate(self, textPath, batchSize):
-        sg.load()
+        self.load()
 
         # set text data
         self.ds.setIdData(textPath)
@@ -126,14 +126,41 @@ class Segmentater:
                 self.ds.segData[b] = sampler.track(idLine[1:-1], self.lm, self.ds)
 
                 yield '　'.join(self.ds.getSegedLine(b))    
+    
+    def assignVec(self, segedTextPath, resultPath):
+        self.load()
+        print('load model')
 
+        # set word vec
+        segedText = [line.strip() for line in open(segedTextPath)]
+        ws = {w for line in segedText for w in line.split('　')}
+        
+        ws = [tuple(sg.ds.chars2ids(w)) for w in list(ws)]
+        ws += [(sg.ds.char2id[w],) for w in ['<BOS>','<EOS>']]
+
+        print('set words')
+
+        # set
+        sg.lm.getWordVecs(ws)
+        print('calc vec')
+
+        wvDict = {}
+        for w in ws:
+            i = sg.lm.wordVecIndiceDict[w]
+            wvDict[w] = sg.lm.wordVecTable[i:i+1,].data
+
+        writePath = resultPath+'/wordVec.dict'
+        pickle.dump(wvDict, open(writePath,'wb'))
+        print('done')
+    
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m','--mode',type=str,choices=['train','seg'],
+    parser.add_argument('-m','--mode',type=str,choices=['train','seg','vecAssign'],
                         help='run mode')
     parser.add_argument('-tp','--textPath',type=str,help='text path for segmentation')
-    parser.add_argument('-pp','--pretrainPath',type=str,help='path where pretrained models and idDict are located')
+    parser.add_argument('-pp','--pretrainPath',type=str,
+                        help='path where pretrained models and idDict are located')
     parser.add_argument('-rp','--resultPath',type=str,help='path to save models')
 
     parser.add_argument('-be','--beginEpoch',type=int,default=0,
@@ -142,10 +169,12 @@ if __name__ == '__main__':
                         help='train-end epoch')
     parser.add_argument('-bs','--batchSize',type=int,default=32,
                         help='segmentation batch size')
-    parser.add_argument('-ss','--showSeg',action='store_true')
-
+    parser.add_argument('-ss','--showSeg',action='store_true',
+                        help='show segmentation process')
     parser.add_argument('-K','--samplingSizeK',type=int,default=100,
                         help='sampling size k for softmax approximation')
+    parser.add_argument('-stp','--segedTextPath',type=str,
+                        help='segmentated text path')
 
     args = parser.parse_args()
 
@@ -162,3 +191,5 @@ if __name__ == '__main__':
     elif args.mode == 'seg':
         for line in sg.segmentate(args.textPath, args.batchSize):
             print(line)
+    elif args.mode == 'vecAssign':
+        sg.assignVec(args.segedTextPath, resultPath) 
