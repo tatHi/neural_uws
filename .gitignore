@@ -1,6 +1,7 @@
 /model/*
 /data/*
+!/data/kokoro.txt
 /src/__pycache__/*
 /src/*
-!*/src/*.py
+!/src/*.py
 /result/*
