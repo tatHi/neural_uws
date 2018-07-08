@@ -9,3 +9,6 @@ Unsupervised Word Segmentation with Neural Language Model
 特許をとっているNPYLMを元にした研究です．  
 念のため研究目的以外での利用は控えてください．
 
+```
+$ python charVecTrainer.py --textPath ../data/kokoro.txt --resultPath ../result --embedSize 30 --windowSize 3 --epoch 100 --batchSize 64
+```
