@@ -120,13 +120,9 @@ class LM(Chain):
                 else:
                     oovs.append(pair)
             
-            st = time()
             self.setNgramProbs_OOV(oovs, lam)
-            print('oov:', time()-st)
             
-            st = time()
             self.setNgramProbs_IV(ivs, inVoc, V, lam)
-            print('iv:', time()-st)
 
     def setNgramProbs_OOV(self, oovs, lam):
         for pair in oovs:

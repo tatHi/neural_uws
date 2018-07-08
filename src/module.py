@@ -40,3 +40,5 @@ def showSegSentence(line, segLine):
     tmp += line[-1]
     ws.append(tmp)
     print('_'.join(ws))
+
+

@@ -61,7 +61,7 @@ class Trainer:
         self.modelPath = resultPath+'/charEmbed.npy'
 
         data = [line.strip() for line in open(textPath) if line.strip()]
-        self.ds = dataset.Dataset(data, init=True)
+        self.ds = dataset.Dataset(data)
         pickle.dump((self.ds.char2id, self.ds.id2char), open(idDictPath,'wb'))
 
         self.clm = CLM(len(self.ds.char2id), embedSize, windowSize)

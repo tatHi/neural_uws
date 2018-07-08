@@ -23,10 +23,12 @@ for line in data:
         u = line[i]
         uniDict[u] += 1
 
+uniDict['<EOS>'] = len(data)
+
 # count
 uniAll = sum([uniDict[u] for u in uniDict])
 
-uniProbDict = {c:uniDict[c]/uniAll for line in data for c in line}
+uniProbDict = {c:uniDict[c]/uniAll for c in uniDict}
 
 writePath = args.resultPath+'/uniProb.dict'
 pickle.dump(uniProbDict, open(writePath, 'wb'))

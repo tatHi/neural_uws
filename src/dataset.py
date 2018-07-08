@@ -7,7 +7,7 @@ bos = '<BOS>'
 eos = '<EOS>'
 
 class Dataset:
-    def __init__(self, data, idDictPath=None, init=False):
+    def __init__(self, data, idDictPath=None):
         # param
         self.data = []
         self.id2char = {}
@@ -15,7 +15,7 @@ class Dataset:
         self.cObs = Counter()
         self.idData = []
         self.segData = []
-        if init:
+        if idDictPath is None:
             self.setDict(data)
         else:
             self.char2id, self.id2char = pickle.load(open(idDictPath,'rb'))
@@ -176,6 +176,21 @@ class Dataset:
         ps = [(self.cObs.get(word))/(cW) for word in words]
         return ps
 
+    def setDist(self, mode):
+
+        self.dist_p = []
+        self.dist_label = []
+
+        for w in self.cObs.uni:
+            if self.cObs.uni[w]>0:
+                if mode=='noise':
+                    # noise distribution
+                    self.dist_p.append(self.cObs.uni[w]**(3/4))
+                self.dist_label.append(w)
+
+        # normalize
+        self.dist_p = (self.dist_p/np.sum(self.dist_p)).tolist()
+
     def getInVoc(self, size=None, mode='uniform'):
         if size==None:
             vocs = [tuple(self.chars2ids(w)) for w in self.cObs.uni if self.cObs.get(w)>0]
@@ -183,13 +198,13 @@ class Dataset:
             if mode=='noise':
                 # noise distributionからサンプリング
                 # size: 数
-                if self.dist_p==None or self.dist_label==None:
-                    self.setDist()
+                if self.dist_label is None or self.dist_p is None:
+                    self.setDist(mode)
                 ws = np.random.choice(self.dist_label, size, p=self.dist_p, replace=False)
             elif mode=='uniform':
                 # sample word from uniform distribution
-                if self.dist_label==None:
-                    self.setDist()
+                if self.dist_label is None:
+                    self.setDist(mode)
                 ws = np.random.choice(self.dist_label, size, replace=False)
             vocs = [tuple(self.chars2ids(w)) for w in ws]
         return vocs
@@ -211,7 +226,6 @@ class Dataset:
                 unk += w
         
         lam = unk/W
-        print('lambda:', lam)
         return lam
 
 class Counter:
