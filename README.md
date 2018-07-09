@@ -10,10 +10,12 @@ Unsupervised Word Segmentation with Neural Language Model
 https://twitter.com/daiti_m/status/851810748263157760  
 
 ## 環境
-python 3.6.4
-Chainer 4.0  
-numpy
-  
+python 3.6.4  
+
+```
+$ pip install chainer==4.1.0  
+$ pip install numpy==1.13.3  
+```
 
 ## 使い方
 ### 作業場所の作成
@@ -56,6 +58,7 @@ $ python segmentater.py --mode train \
 
   
 ### 前向きアルゴリズムによる分割
+学習データで未知の文字が含まれなければ，どのようなテキストでも可．  
 ```
 python segmentater.py --mode seg \
                       --textPath ../data/kokoro.txt \
