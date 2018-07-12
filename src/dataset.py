@@ -7,19 +7,19 @@ bos = '<BOS>'
 eos = '<EOS>'
 
 class Dataset:
-    def __init__(self, data, idDictPath=None):
+    def __init__(self, textPath, idDictPath=None):
         # param
-        self.data = []
+        self.data = [line.strip() for line in open(textPath) if line.strip()]
         self.id2char = {}
         self.char2id = {}
         self.cObs = Counter()
         self.idData = []
         self.segData = []
         if idDictPath is None:
-            self.setDict(data)
+            self.setDict(self.data)
         else:
             self.char2id, self.id2char = pickle.load(open(idDictPath,'rb'))
-        self.setIdData(data)
+        self.setIdData(self.data)
 
         self.cW = None
         self.dist_p = None      # unigramでの分布
@@ -43,8 +43,7 @@ class Dataset:
             self.char2id[token] = len(self.char2id)
             self.id2char[self.char2id[token]] = token
 
-    def setIdData(self, textPath):
-        data = [line.strip() for line in open(textPath) if line.strip()]
+    def setIdData(self, data):
         self.data = []
         self.idData = []
         self.segData = []

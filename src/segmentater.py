@@ -25,9 +25,7 @@ class Segmentater:
         self.samplingSizeK = samplingSizeK
 
     def setupDS(self):
-        data = [line.strip() for line 
-                    in open(self.textPath,'r') if line.strip()]
-        self.ds = dataset.Dataset(data, idDictPath)
+        self.ds = dataset.Dataset(self.textPath, self.idDictPath)
 
         # set initial segmentation
         self.ds.setInitialSeg_random()
