@@ -9,6 +9,8 @@ Unsupervised Word Segmentation with Neural Language Model
 念のため研究目的以外での利用は控えてください．  
 https://twitter.com/daiti_m/status/851810748263157760  
 
+まだGPU対応してないです．  
+
 ## 環境
 python 3.6.4  
 
