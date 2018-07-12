@@ -16,6 +16,7 @@ n = 3-1
 class Segmentater:
     def __init__(self,textPath, idDictPath, charVecPath, uniProbDictPath, resultPath, samplingSizeK):
         self.textPath = textPath
+        self.idDictPath = idDictPath
         self.modelPath = resultPath+'/model.npz'
         self.datasetPath = resultPath+'/dataset.pickle'
 
