@@ -19,6 +19,7 @@ python 3.6.4
 ```
 $ pip install chainer==4.1.0  
 $ pip install numpy==1.13.3  
+$ pip install gensim==3.4.0
 ```
 
 ## 使い方
@@ -36,7 +37,6 @@ $ python charVecTrainer.py --textPath ../data/kokoro.txt \
                            --embedSize 30 \
                            --windowSize 3 \
                            --epoch 100 \
-                           --batchSize 64
 ```
   
 ### 離散ユニグラム辞書の作成
