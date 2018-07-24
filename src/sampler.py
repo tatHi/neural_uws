@@ -156,7 +156,7 @@ def track(idLine, lm, ds):
     while flag>=0:
         dist = np.sum(alpha[flag],axis=1)
         dist /= np.sum(dist)
-        l = np.random.choice(len(dist), 1, p=dist)[0]
+        l = np.argmax(dist)
         ls.append(l+1)
         if sum(ls) == len(idLine):
             break
