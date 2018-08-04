@@ -64,8 +64,7 @@ class CharLM(Chain):
         return self.wordProbDict[word]
 
     def getLoss(self, words, gpu):
-        if self.dot_table is None:
-            self.setTable()
+        self.setTable()
 
         ids = [c for word in words for c in word[:-1]]
         rows = self.dot_table[ids,]
